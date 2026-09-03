@@ -11,7 +11,7 @@ impl Plugin for ServerHealthPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins(SharedHealthPlugin)
-            .add_systems(Update, (deal_damage, deal_healing))
+            .add_systems(Update, (deal_healing, deal_damage).chain())
             ;
     }
 }
