@@ -1,4 +1,20 @@
+use bevy::prelude::*;
+
+use crate::{messages::{DamageMessage, DeathMessage, HealMessage}, protocol::ProtocolPlugin};
+
 pub mod protocol;
-pub mod health;
 pub mod components;
 pub mod messages;
+
+pub struct SharedHealthPlugin;
+
+impl Plugin for SharedHealthPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .add_plugins(ProtocolPlugin)
+            .add_message::<DamageMessage>()
+            .add_message::<HealMessage>()
+            .add_message::<DeathMessage>()
+            ;
+    }
+}
