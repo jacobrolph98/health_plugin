@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{components::{Armour, Cap, Health, Threshold}, messages::{DamageMessage, DeathMessage}};
+use shared::{components::{Armour, Cap, Health, MaxHealth, Threshold}, messages::{DamageMessage, DeathMessage, HealMessage}};
 
 pub fn deal_damage(
     mut damage_msgs: MessageReader<DamageMessage>,
@@ -22,5 +22,17 @@ pub fn deal_damage(
             dealt_damage 
         };
         health.0 -= dealt_damage;
+    }
+}
+
+pub fn deal_healing(
+    mut heal_msgs: MessageReader<HealMessage>,
+    mut health_q: Query<(&mut Health, Option<&MaxHealth>)>,
+) {
+    for healing in heal_msgs.read() {
+        let (mut health, has_max) = health_q.get_mut(healing.target).expect("Target entity has no health");
+        let max = has_max.unwrap_or(&MaxHealth(f32::MAX)).0;
+        let dealt_healing = if healing.amount + health.0 > max { max - health.0 } else { healing.amount };
+        health.0 += dealt_healing;
     }
 }
