@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::health::SharedHealthPlugin;
+use health_shared::health::SharedHealthPlugin;
 
 pub struct ClientHealthPlugin;
 

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::{components::{Armour, Cap, Health, MaxHealth, Threshold}, messages::{DamageMessage, DeathMessage, HealMessage}};
+use health_shared::{components::{Armour, Cap, Health, MaxHealth, Threshold}, messages::{DamageMessage, DeathMessage, HealMessage}};
 
 pub fn deal_damage(
     mut damage_msgs: MessageReader<DamageMessage>,

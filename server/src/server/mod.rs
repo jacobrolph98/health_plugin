@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use shared::health::SharedHealthPlugin;
+use health_shared::health::SharedHealthPlugin;
 
 use crate::server::systems::{deal_damage, deal_healing};
 
