@@ -1,0 +1,12 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+shared = { path = "../shared" }
+server = { path = "../server" }
+lightyear = { workspace = true, features = ["client"] }
+bevy.workspace = true
+avian3d.workspace = true
+bevy_enhanced_input.workspace = true
