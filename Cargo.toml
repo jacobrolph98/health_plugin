@@ -1,3 +1,18 @@
+[package]
+name = "health_plugin"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = []
+client = ["dep:health_client"]
+server = ["dep:health_server"]
+
+[dependencies]
+health_shared = { path = "shared", default-features = false }
+health_client = { path = "client", optional = true }
+health_server = { path = "server", optional = true }
+
 [workspace]
 members = [
     "client",
@@ -8,7 +23,6 @@ resolver = "2"
 
 [workspace.dependencies]
 bevy = { version = "0.19.1", features = ["dynamic_linking", "bevy_ui_widgets"] }
-avian3d = { version = "0.7", features = ["serialize"] }
 lightyear = { git = "https://github.com/cBournhonesque/lightyear.git", branch = "main", default-features = false, features = [
     "netcode",
     "replication",
@@ -19,7 +33,6 @@ lightyear = { git = "https://github.com/cBournhonesque/lightyear.git", branch = 
     "crossbeam",
     "input_bei",
     ]}
-bevy_enhanced_input = { version = "0.26.0", features = ["serialize"]}
 serde = { version = "1.0", features = ["derive"]}
 rand = "0.9"
 

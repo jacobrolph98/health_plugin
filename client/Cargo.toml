@@ -1,12 +1,11 @@
 [package]
-name = "client"
+name = "health_client"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-shared = { path = "../shared" }
-server = { path = "../server" }
-lightyear = { workspace = true, features = ["client"] }
+health_shared = { path = "../shared" }
 bevy.workspace = true
-avian3d.workspace = true
-bevy_enhanced_input.workspace = true
+lightyear = { workspace = true, features = ["client"] }
+
+[lib]

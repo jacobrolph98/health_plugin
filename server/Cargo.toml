@@ -1,11 +1,11 @@
 [package]
-name = "server"
+name = "health_server"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-shared = { path = "../shared" }
+health_shared = { path = "../shared" }
 bevy.workspace = true
-avian3d.workspace = true
 lightyear = { workspace = true, features = ["server"] }
-bevy_enhanced_input.workspace = true
+
+[lib]
