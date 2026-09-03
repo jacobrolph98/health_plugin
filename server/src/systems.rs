@@ -7,6 +7,7 @@ pub fn deal_damage(
     mut death_msgs: MessageWriter<DeathMessage>,
 ) {
     for damage in damage_msgs.read() {
+        if damage.amount <= 0. { continue }
         let (mut health, has_threshold, has_cap, has_armour) = health_q.get_mut(damage.target).expect("Target entity has no health");
         let minimum = has_threshold.unwrap_or(&Threshold(0.)).0;
         let maximum = has_cap.unwrap_or(&Cap(f32::MAX)).0;
@@ -30,9 +31,191 @@ pub fn deal_healing(
     mut health_q: Query<(&mut Health, Option<&MaxHealth>)>,
 ) {
     for healing in heal_msgs.read() {
+        if healing.amount <= 0. { continue }
         let (mut health, has_max) = health_q.get_mut(healing.target).expect("Target entity has no health");
         let max = has_max.unwrap_or(&MaxHealth(f32::MAX)).0;
         let dealt_healing = if healing.amount + health.0 > max { max - health.0 } else { healing.amount };
         health.0 += dealt_healing;
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn build_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, (deal_healing, deal_damage).chain());
+        app.add_message::<DamageMessage>();
+        app.add_message::<HealMessage>();
+        app.add_message::<DeathMessage>();
+        app
+    }
+
+    #[test]
+    fn damage_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: 5.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 5.);
+    }
+
+    #[test]
+    fn negative_damage_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: -5.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 10.);
+    }
+
+    #[test]
+    fn heal_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(HealMessage {
+            target: trgt,
+            source: src,
+            amount: 5.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 15.);
+    }
+
+    #[test]
+    fn negative_heal_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(HealMessage {
+            target: trgt,
+            source: src,
+            amount: -5.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 10.);
+    }
+
+    #[test]
+    fn overheal_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Health(10.),
+            MaxHealth(12.)
+        )).id();
+        app.world_mut().write_message(HealMessage {
+            target: trgt,
+            source: src,
+            amount: 5.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 12.);
+    }
+
+    #[test]
+    fn damage_cap_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Cap(5.),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: 8.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 5.);
+    }
+
+    #[test]
+    fn over_damage_threshold_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Threshold(5.),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: 8.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 2.);
+    }
+
+    #[test]
+    fn under_damage_threshold_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Threshold(5.),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: 3.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 10.);
+    }
+
+    #[test]
+    fn armour_test() {
+        let mut app = build_app();
+        let src = app.world_mut().spawn(Name::new("Source")).id();
+        let trgt = app.world_mut().spawn((
+            Name::new("Target"),
+            Armour(5.),
+            Health(10.),
+        )).id();
+        app.world_mut().write_message(DamageMessage {
+            target: trgt,
+            source: src,
+            amount: 8.,
+        });
+        app.update();
+        let health = app.world().get::<Health>(trgt).unwrap();
+        assert_eq!(health.0, 7.);
     }
 }
